@@ -1,6 +1,6 @@
 ## Algorithmic Traiding
 
-Repo para explorar algoritmos para realizar *Traiding*.
+Repo para explorar algoritmos de *Traiding*.
 
 
 ## Datos
