@@ -12,4 +12,11 @@ Para la documentación:
 
 - [Markdown Guide](https://www.markdownguide.org/basic-syntax/)
 - [GitHub Guide](https://docs.github.com/en)
-- 
+
+
+
+## Team members
+
+- Juan Sebastian Arias 
+- Adriana Maria Santa
+- Camilo Velasco Franco
