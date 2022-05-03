@@ -20,3 +20,5 @@ Para la documentación:
 - Juan Sebastian Arias 
 - Adriana Maria Santa
 - Camilo Velasco Franco
+- Alejandro López
+- Mauricio Velasquez
