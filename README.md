@@ -1,4 +1,4 @@
-## Algorithmic Traiding
+## Algorithmic Trading
 
 Repo para explorar algoritmos de *Trading*.
 
