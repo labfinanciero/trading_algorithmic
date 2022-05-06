@@ -92,7 +92,7 @@ Encrypt_Decrypt <- function(Message, Encr_decr){
 # Encrypt
 ####
 
-Message_encr = 'Hi Adri, Hi Sebas, how are you?'
+Message_encr = 'Hi Adri, Hi Sebas, Hi Alejo, Hi Mauro, how are you?'
 Action = 0  #### ---> 0 for Encrypt, 1 for Decrypt 
 Encrypted_msg = Encrypt_Decrypt(Message_encr, Action)
 print(Encrypted_msg)
