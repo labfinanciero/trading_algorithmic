@@ -20,5 +20,6 @@ Para la documentaciÃ³n:
 - Juan Sebastian Arias 
 - Adriana Maria Santa
 - Camilo Velasco Franco
-- Alejandro LÃ³pez
-- Mauricio Velasquez
+- Alejandro López Alvarez
+- Daniel Mauricio Velasquez Gonzalez
+- Andrés Felipe Jaramillo Alvarado
