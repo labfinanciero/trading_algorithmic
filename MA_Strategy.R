@@ -19,15 +19,14 @@ path_dir = "C:/Users/camil/Documents/GitHub/Algorithmic_Traiding"
 setwd(path_dir)
 
 
-##### Functions -------------------------------------------------------------------
-## --------------------------------------------------------------------------------
+
+## -------------------------------------------------------------------------
+## -------------------------------- Functions ------------------------------
+## -------------------------------------------------------------------------
 
 # This function creates the MA for a period p
-
 MA <- function(Prices, p){
-  
   # Handle NA values
-  
   for(i in 2:nrow(Prices)){
     if(is.na(Prices$Close[i]) == TRUE){
       Prices$Open[i] = Prices$Open[i - 1]
@@ -43,7 +42,6 @@ MA <- function(Prices, p){
     MA_prices[i] = sum(Prices$Close[(i - p + 1):i])/p 
   }
   
-  
   #MA_prices = MA_prices[-c(1:(p - 1))]
   #New_Dates = Dates[(length(Dates) - length(MA_prices) + 1):length(Dates)]
   MA_prices = data.frame(Prices, MA_prices)
@@ -51,60 +49,112 @@ MA <- function(Prices, p){
   MA_prices
 }
 
-# -------------------------------------------------------------------------------
+
+# This function implements the MA strategy
+Strategy_MA <- function(MA_prices, p){
+
+  # To Store the crossings Up = 1, Down = -1, Flat = 0
+  Cross_ts <- c()
+  Cross_ts[1:(p-1)] <- rep(NA, p-1)
+  # Initialize the first point
+  Cross_ts[p] = 0
+   
+  # Fill the other points
+  for(i in (p+1):nrow(MA_prices)){
+    if(MA_prices$Close[i - 1] < MA_prices[i - 1, 6] && 
+       MA_prices$Close[i] > MA_prices[i, 6]){
+      Cross_ts[i] = 1
+    }else if(MA_prices$Close[i - 1] > MA_prices[i - 1, 6] && 
+             MA_prices$Close[i] < MA_prices[i, 6]){
+      Cross_ts[i] = -1
+    }else{
+      Cross_ts[i] = 0
+    }
+  }
+  MA_prices$Crosses <- Cross_ts
+  
+
+  # Calculate the returns at each -1 point (Sell Point)
+  # 1) Get the indices for 1 and -1
+  ind_up <- which(MA_prices$Crosses == 1)
+  ind_down <- which(MA_prices$Crosses == -1)
+  
+  # 2) Define the variables to store the Data
+  Buy_Date <- c()
+  Buy_Price <- c()
+  Sell_Date <- c()
+  Sell_Price <- c()
+  Strat_return <- c()
+  
+  for(i in 1:(min(length(ind_up), length(ind_down)))){
+    Buy_Date[i] = MA_prices$Date[ind_up[i]]
+    Buy_Price[i] = MA_prices$Close[ind_up[i]]
+    Sell_Date[i] = MA_prices$Date[ind_down[i]]
+    Sell_Price[i] = MA_prices$Close[ind_down[i]]
+    Strat_return[i] = (Sell_Price[i]/Buy_Price[i] - 1) * 100 
+  }
+  
+  Strat_summary = data.frame(Buy_Date, Sell_Date, Buy_Price, 
+                             Sell_Price, Strat_return)
+  colnames(Strat_summary) <- c("Buy Date", "Sell Date", "Buy Price", 
+                               "Sell Price", "Returns in %")
+  
+  # Batting average
+  batt_avg = round(length(which(Strat_summary$`Returns in %` >= 0))
+                   /length(ind_up) * 100, 2)
+  
+  # Output
+  list(MA_prices, Strat_summary, batt_avg)
+}
+
+## -------------------------------------------------------------------------
+## ---------------------------- END Functions ------------------------------
+## -------------------------------------------------------------------------
 
 
 
 
+## -------------------------------------------------------------------------
+## ------------------------------- MAIN ------------------------------------
+## -------------------------------------------------------------------------
 
-## Import Data ------------------------------------------------------------
+## Import data:
+  path_data = paste(path_dir, "/data/activos", sep = "")
+  Files_names = list.files(path_data)
+
+## Select an Asset:
+  Asset = floor(runif(1, 1, length(Files_names)))
+  Prices = read.csv(paste(path_data, "/", Files_names[Asset], sep = ""))[,-c(6,7)]
+  Ticker = strsplit(colnames(Prices)[2], "[.]")[[1]][1]
+  colnames(Prices) <- c("Date", "Open", "High", "Low", "Close")
+
+## Select the periods for the MA Strategy
+  p = 20
+
+## Implement the Strategy and get the results
+  Strategy_Results = Strategy_MA(MA(Prices, p), p)
+
+  MA_prices = Strategy_Results[[1]]
+  Strat_summary = Strategy_Results[[2]]
+  batt_avg = Strategy_Results[[3]]
+
+  
 ## ------------------------------------------------------------------------
-
-path_data = paste(path_dir, "/data/activos", sep = "")
-Files_names = list.files(path_data)
-
-
-Asset = floor(runif(1, 1, length(Files_names)))
-Prices = read.csv(paste(path_data, "/", Files_names[Asset], sep = ""))[,-c(6,7)]
-Ticker = strsplit(colnames(Prices)[2], "[.]")[[1]][1]
-colnames(Prices) <- c("Date", "Open", "High", "Low", "Close")
-
-p = 20
-MA_prices = MA(Prices, p)
-
+## ------------------------------ END MAIN --------------------------------
+## ------------------------------------------------------------------------
+  
+  
+  
+  
+# -----------------------------------------------------------------------
+# ---------------------------- Results Analysis ---------------------------
 # -------------------------------------------------------------------------
 
-
-
-# Add the crossings of the Price on the MA: Up = 1, Down = -1, Flat = 0 -----
-# ---------------------------------------------------------------------------
-
-# To Store the crossings
-Cross_ts <- c()
-Cross_ts[1:(p-1)] <- rep(NA, p-1)
-# Initialize the first point
-Cross_ts[p] = 0
- 
-# Fill the other points
-for(i in (p+1):nrow(MA_prices)){
-  if(MA_prices$Close[i - 1] < MA_prices[i - 1, 6] && 
-     MA_prices$Close[i] > MA_prices[i, 6]){
-    Cross_ts[i] = 1
-  }else if(MA_prices$Close[i - 1] > MA_prices[i - 1, 6] && 
-           MA_prices$Close[i] < MA_prices[i, 6]){
-    Cross_ts[i] = -1
-  }else{
-    Cross_ts[i] = 0
-  }
-}
-MA_prices$Crosses <- Cross_ts
-
-
-# ----------------------------------------------------------------------------
-
-
-
-
+Stats_strategy = data.frame(c(as.array(summary(Strat_summary$`Returns in %`, 
+                                               digits = 4)), batt_avg))
+colnames(Stats_strategy) <- ""
+row.names(Stats_strategy)[7] <- "Batting avg %"
+hist(Strat_summary$`Returns in %`, main = Ticker, xlab = "Returns in %")
 
 
 # Interactive graph Price vs MA ------------------------------------------
@@ -120,4 +170,7 @@ dygraph(data_plot, main = Ticker) %>%
   dyCandlestick() %>%
   dyRoller(showRoller = T, rollPeriod = 1)
 
+
+# -------------------------------------------------------------------------
+# --------------------------- End Results Analysis ------------------------
 # -------------------------------------------------------------------------
