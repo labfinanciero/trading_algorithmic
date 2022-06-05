@@ -12,6 +12,10 @@ En esta carpeta  se tendrán los datos para probar los programas.
 En esta carpeta se tendrán las diferentes estratégias a aplicar 
 
 
+## Reuniones
+En esta carpeta se guardarán los resúmenes de las reuniones
+
+
 ## Markdown referencias
 Para la documentación: 
 
