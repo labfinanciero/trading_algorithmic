@@ -4,7 +4,11 @@ Repo para explorar algoritmos de *Trading*.
 
 
 ## Datos
-En esta carpeta  se tendran los datos para probar los programas. 
+En esta carpeta  se tendrán los datos para probar los programas. 
+
+
+## Strategies
+En esta carpeta se tendrán las diferentes estratégias a aplicar 
 
 
 ## Markdown referencias
@@ -20,6 +24,6 @@ Para la documentación:
 - Juan Sebastian Arias 
 - Adriana Maria Santa
 - Camilo Velasco Franco
-- Alejandro L�pez Alvarez
+- Alejandro L?pez Alvarez
 - Daniel Mauricio Velasquez Gonzalez
-- Andr�s Felipe Jaramillo Alvarado
+- Andr?s Felipe Jaramillo Alvarado
