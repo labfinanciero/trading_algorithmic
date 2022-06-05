@@ -4,7 +4,8 @@ Repo para explorar algoritmos de *Trading*.
 
 
 ## Datos
-En esta carpeta  se tendrán los datos para probar los programas. 
+En esta carpeta  se tendrán los datos para probar los programas.
+(Nota: Los datos están desde el 2007 al 2013 sólamente)
 
 
 ## Strategies
