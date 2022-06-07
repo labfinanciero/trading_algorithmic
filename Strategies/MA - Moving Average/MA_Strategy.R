@@ -15,8 +15,8 @@ library(tseries)
 
 # -------------------------
 
-path_dir = "C:/Users/camil/Documents/GitHub/Algorithmic_Traiding" 
-setwd(path_dir)
+# path_dir = "C:/Users/camil/Documents/GitHub/Algorithmic_Traiding" 
+# setwd(path_dir)
 
 
 
@@ -29,24 +29,24 @@ MA <- function(Prices, p){
   # Handle NA values
   for(i in 2:nrow(Prices)){
     if(is.na(Prices$Close[i]) == TRUE){
-      Prices$Open[i] = Prices$Open[i - 1]
-      Prices$High[i] = Prices$High[i - 1]
-      Prices$Low[i] = Prices$Low[i - 1]
-      Prices$Close[i] = Prices$Close[i - 1]
+      Prices$Open[i] <- Prices$Open[i - 1]
+      Prices$High[i] <- Prices$High[i - 1]
+      Prices$Low[i] <- Prices$Low[i - 1]
+      Prices$Close[i] <- Prices$Close[i - 1]
     }
   }
   
   # Calculate the Moving average
-  MA_prices <- c()
+  MA_prices <- vector(length = length(Prices$Close) - p + 1)
   for(i in length(Prices$Close):p){
-    MA_prices[i] = sum(Prices$Close[(i - p + 1):i])/p 
+    MA_prices[i] <- sum(Prices$Close[(i - p + 1):i])/p 
   }
   
   #MA_prices = MA_prices[-c(1:(p - 1))]
   #New_Dates = Dates[(length(Dates) - length(MA_prices) + 1):length(Dates)]
-  MA_prices = data.frame(Prices, MA_prices)
+  MA_prices <- data.frame(Prices, MA_prices)
   colnames(MA_prices) <- c("Date", "Open", "High", "Low", "Close", paste("MA", p))
-  MA_prices
+  return(MA_prices)
 }
 
 
@@ -57,18 +57,18 @@ Strategy_MA <- function(MA_prices, p){
   Cross_ts <- c()
   Cross_ts[1:(p-1)] <- rep(NA, p-1)
   # Initialize the first point
-  Cross_ts[p] = 0
+  Cross_ts[p] <- 0
    
   # Fill the other points
   for(i in (p+1):nrow(MA_prices)){
     if(MA_prices$Close[i - 1] < MA_prices[i - 1, 6] && 
        MA_prices$Close[i] > MA_prices[i, 6]){
-      Cross_ts[i] = 1
+      Cross_ts[i] <- 1
     }else if(MA_prices$Close[i - 1] > MA_prices[i - 1, 6] && 
              MA_prices$Close[i] < MA_prices[i, 6]){
-      Cross_ts[i] = -1
+      Cross_ts[i] <- -1
     }else{
-      Cross_ts[i] = 0
+      Cross_ts[i] <- 0
     }
   }
   MA_prices$Crosses <- Cross_ts
@@ -87,20 +87,20 @@ Strategy_MA <- function(MA_prices, p){
   Strat_return <- c()
   
   for(i in 1:(min(length(ind_up), length(ind_down)))){
-    Buy_Date[i] = MA_prices$Date[ind_up[i]]
-    Buy_Price[i] = MA_prices$Close[ind_up[i]]
-    Sell_Date[i] = MA_prices$Date[ind_down[i]]
-    Sell_Price[i] = MA_prices$Close[ind_down[i]]
-    Strat_return[i] = (Sell_Price[i]/Buy_Price[i] - 1) * 100 
+    Buy_Date[i] <- MA_prices$Date[ind_up[i]]
+    Buy_Price[i] <- MA_prices$Close[ind_up[i]]
+    Sell_Date[i] <- MA_prices$Date[ind_down[i]]
+    Sell_Price[i] <- MA_prices$Close[ind_down[i]]
+    Strat_return[i] <- (Sell_Price[i]/Buy_Price[i] - 1) * 100 
   }
   
-  Strat_summary = data.frame(Buy_Date, Sell_Date, Buy_Price, 
+  Strat_summary <- data.frame(Buy_Date, Sell_Date, Buy_Price, 
                              Sell_Price, Strat_return)
   colnames(Strat_summary) <- c("Buy Date", "Sell Date", "Buy Price", 
                                "Sell Price", "Returns in %")
   
   # Batting average
-  batt_avg = round(length(which(Strat_summary$`Returns in %` >= 0))
+  batt_avg <- round(length(which(Strat_summary$`Returns in %` >= 0))
                    /length(ind_up) * 100, 2)
   
   # Output
@@ -119,24 +119,24 @@ Strategy_MA <- function(MA_prices, p){
 ## -------------------------------------------------------------------------
 
 ## Import data:
-  path_data = paste(path_dir, "/data/activos", sep = "")
-  Files_names = list.files(path_data)
+  #path_data = paste(path_dir, "/data/activos", sep = "")
+  Files_names <- list.files("data/activos/", full.names = TRUE)
 
 ## Select an Asset:
-  Asset = floor(runif(1, 1, length(Files_names)))
-  Prices = read.csv(paste(path_data, "/", Files_names[Asset], sep = ""))[,-c(6,7)]
-  Ticker = strsplit(colnames(Prices)[2], "[.]")[[1]][1]
+  Asset <-  floor(runif(1, 1, length(Files_names)))
+  Prices <- read_csv(Files_names[Asset], col_types = list("D", "d", "d", "d", "d", "d", "d"))[-c(6,7)]
+  Ticker <- gsub(pattern = "\\.Open", replacement = "", colnames(Prices)[2])
   colnames(Prices) <- c("Date", "Open", "High", "Low", "Close")
 
 ## Select the periods for the MA Strategy
-  p = 20
+  p <- 20
 
 ## Implement the Strategy and get the results
-  Strategy_Results = Strategy_MA(MA(Prices, p), p)
+  Strategy_Results <- Strategy_MA(MA(Prices, p), p)
 
-  MA_prices = Strategy_Results[[1]]
-  Strat_summary = Strategy_Results[[2]]
-  batt_avg = Strategy_Results[[3]]
+  MA_prices <- Strategy_Results[[1]]
+  Strat_summary <- Strategy_Results[[2]]
+  batt_avg <- Strategy_Results[[3]]
 
   
 ## ------------------------------------------------------------------------
@@ -150,7 +150,7 @@ Strategy_MA <- function(MA_prices, p){
 # ---------------------------- Results Analysis ---------------------------
 # -------------------------------------------------------------------------
 
-Stats_strategy = data.frame(c(as.array(summary(Strat_summary$`Returns in %`, 
+Stats_strategy <- data.frame(c(as.array(summary(Strat_summary$`Returns in %`, 
                                                digits = 4)), batt_avg))
 colnames(Stats_strategy) <- ""
 row.names(Stats_strategy)[7] <- "Batting avg %"
