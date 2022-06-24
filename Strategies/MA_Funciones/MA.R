@@ -1,14 +1,25 @@
 # This function creates the MA for a period p
 MA <- function(Prices, p){
  # Handle NA values
- for(i in 2:nrow(Prices)){
-  if(is.na(Prices$Close[i]) == TRUE){
-   Prices$Open[i] <- Prices$Open[i - 1]
-   Prices$High[i] <- Prices$High[i - 1]
-   Prices$Low[i] <- Prices$Low[i - 1]
-   Prices$Close[i] <- Prices$Close[i - 1]
+ # Error: NA adjacent. 
+ nas <- which(is.na(Prices$Close))
+ if (length(nas) > 0) {
+  first_pos <- any(nas == 1)
+  if (first_pos) {
+   Prices$Close[1] <- Prices$Close[nas[1]]
+   Prices$Close[nas[-1]] <- Prices$Close[(nas[-1] - 1)]
+  } else {
+   Prices$Close[nas] <- Prices$Close[nas - 1] 
   }
  }
+ # for(i in 2:nrow(Prices)){
+ #  if(is.na(Prices$Close[i]) == TRUE){
+ #   Prices$Open[i] <- Prices$Open[i - 1]
+ #   Prices$High[i] <- Prices$High[i - 1]
+ #   Prices$Low[i] <- Prices$Low[i - 1]
+ #   Prices$Close[i] <- Prices$Close[i - 1]
+ #  }
+ # }
  
  # Calculate the Moving average
  MA_prices <- vector(length = length(Prices$Close) - p + 1)

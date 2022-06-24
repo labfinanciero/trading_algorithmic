@@ -13,7 +13,7 @@ result <- data.frame(
 ## Select the periods for the MA Strategy
 p <- 20
 cont <- 1
-system.time(
+#system.time(
 for (i in files_names){
  Prices <- read_csv(file = i, col_types = list("D", "d", "d", "d", "d", "d", "d"))[-c(6, 7)]
  Ticker <- gsub(pattern = "\\.Open", replacement = "", colnames(Prices)[2])
@@ -23,7 +23,7 @@ for (i in files_names){
  result$batt_avg_Sell[cont] <- Strategy_MA(MA(Prices, p), p)[[5]]
  cont <- cont + 1
 }
-)
+#)
 
 ggplot(data = result, aes(ticker, batt_avg_Buy)) + 
  geom_point(shape = 21, col = "navy", fill = "royalblue") +
@@ -31,11 +31,8 @@ ggplot(data = result, aes(ticker, batt_avg_Buy)) +
 # +
 #  scale_x_discrete(guide = guide_axis(n.dodge=5)) 
 
-
 ggplot(data = result, aes(ticker, batt_avg_Sell)) + 
   geom_point(shape = 21, col = "green4", fill = "green3") +
   geom_hline(yintercept = 50, lwd = 0.8, lty = 2,  col = "salmon")
 # +
 #  scale_x_discrete(guide = guide_axis(n.dodge=5)) 
-
-
