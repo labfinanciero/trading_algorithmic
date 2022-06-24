@@ -1,4 +1,4 @@
-files_source <- list.files(path = "Strategies/MA_Funciones/", full.names = TRUE)
+files_source <- list.files(path = "Strategies/MMA_Strategy/", full.names = TRUE)
 files_source <- files_source[!grepl("main", files_source)]
 sapply(files_source, source, .GlobalEnv)
 
@@ -11,7 +11,8 @@ result <- data.frame(
 )
 
 ## Select the periods for the MA Strategy
-p <- 20
+p1 <- 7
+p2 <- 21
 cont <- 1
 system.time(
 for (i in files_names){
@@ -19,8 +20,9 @@ for (i in files_names){
  Ticker <- gsub(pattern = "\\.Open", replacement = "", colnames(Prices)[2])
  colnames(Prices) <- c("Date", "Open", "High", "Low", "Close")
  result$ticker[cont] <- Ticker
- result$batt_avg_Buy[cont] <- Strategy_MA(MA(Prices, p), p)[[4]]
- result$batt_avg_Sell[cont] <- Strategy_MA(MA(Prices, p), p)[[5]]
+ 
+ result$batt_avg_Buy[cont] <- Strategy_MMA(MA(Prices, p1), p1, MA(Prices, p2), p2)[[4]]
+ result$batt_avg_Sell[cont] <- Strategy_MMA(MA(Prices, p1), p1, MA(Prices, p2), p2)[[5]]
  cont <- cont + 1
 }
 )

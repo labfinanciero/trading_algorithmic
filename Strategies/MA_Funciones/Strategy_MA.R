@@ -28,30 +28,55 @@ Strategy_MA <- function(MA_prices, p){
  ind_down <- which(MA_prices$Crosses == -1)
  
  # 2) Define the variables to store the Data
+ 
+ ## Buy Strategy
  iter <- min(length(ind_up), length(ind_down))
  Buy_Date <- vector(length = iter)
  Buy_Price <- vector(length = iter)
- Sell_Date <- vector(length = iter)
- Sell_Price <- vector(length = iter)
- Strat_return <- vector(length = iter)
+ Close_Date <- vector(length = iter)
+ Close_Price <- vector(length = iter)
+ Strat_return_Buy <- vector(length = iter)
  
  for(i in 1:iter){
-  Buy_Date[i] <- MA_prices$Date[ind_up[i]]
+  Buy_Date[i] <- format(MA_prices$Date[ind_up[i]], "%Y-%m-%d")
   Buy_Price[i] <- MA_prices$Close[ind_up[i]]
-  Sell_Date[i] <- MA_prices$Date[ind_down[i]]
-  Sell_Price[i] <- MA_prices$Close[ind_down[i]]
-  Strat_return[i] <- (Sell_Price[i]/Buy_Price[i] - 1) * 100 
+  Close_Date[i] <- format(MA_prices$Date[ind_down[i]], "%Y-%m-%d")
+  Close_Price[i] <- MA_prices$Close[ind_down[i]]
+  Strat_return_Buy[i] <- (Close_Price[i]/Buy_Price[i] - 1) * 100 
  }
+ Strat_summary_Buy <- data.frame(Buy_Date, Close_Date, Buy_Price, 
+                                 Close_Price, Strat_return_Buy)
+ colnames(Strat_summary_Buy) <- c("Buy Date", "Closing Date", "Buy Price", 
+                                  "Closing Price", "Ret % (Buy)")
  
- Strat_summary <- data.frame(Buy_Date, Sell_Date, Buy_Price, 
-                             Sell_Price, Strat_return)
- colnames(Strat_summary) <- c("Buy Date", "Sell Date", "Buy Price", 
-                              "Sell Price", "Returns in %")
+ 
+ ## Sell Strategy
+ iter <- min(length(ind_up), length(ind_down))
+ Close_Date <- vector(length = iter)
+ Close_Price <- vector(length = iter)
+ Sell_Date <- vector(length = iter)
+ Sell_Price <- vector(length = iter)
+ Strat_return_Sell <- vector(length = iter)
+ 
+ for(i in 1:iter){
+   Sell_Date[i] <- format(MA_prices$Date[ind_down[i]], "%Y-%m-%d")
+   Sell_Price[i] <- MA_prices$Close[ind_down[i]]
+   Close_Date[i] <- format(MA_prices$Date[ind_up[i+1]], "%Y-%m-%d")
+   Close_Price[i] <- MA_prices$Close[ind_up[i+1]]
+   Strat_return_Sell[i] <- (Close_Price[i]/Sell_Price[i] - 1) * 100 * -1
+ }
+ Strat_summary_Sell <- data.frame(Sell_Date, Close_Date, Sell_Price, 
+                                  Close_Price, Strat_return_Sell)
+ colnames(Strat_summary_Sell) <- c("Sell Date", "Closing Date", "Sell Price", 
+                                  "Closing Price", "Ret % (Sell)")
+ 
  
  # Batting average
- batt_avg <- round(length(which(Strat_summary$`Returns in %` >= 0))
+ batt_avg_Buy <- round(length(which(Strat_summary_Buy$`Ret % (Buy)` >= 0))
                    /length(ind_up) * 100, 2)
+ batt_avg_Sell <- round(length(which(Strat_summary_Sell$`Ret % (Sell)` >= 0))
+                       /length(ind_down) * 100, 2)
  
  # Output
- list(MA_prices, Strat_summary, batt_avg)
+ list(MA_prices, Strat_summary_Buy, Strat_summary_Sell, batt_avg_Buy, batt_avg_Sell)
 }
