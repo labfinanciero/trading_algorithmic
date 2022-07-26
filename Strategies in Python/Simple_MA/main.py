@@ -21,6 +21,6 @@ sys.path.append(strategy_folder)
 
 from Asset import *
 
-apple = Asset('AAPL', 'Stock', 'Technology', 'US')
+amazon = Asset('AMZN', 'Stock', 'Technology', 'US')
 data = apple.market_data()
-sma = apple.simple_moving_average(20)
+sma = apple.simple_moving_average(100)

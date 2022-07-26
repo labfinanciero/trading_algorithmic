@@ -50,16 +50,16 @@ class Asset:
     def simple_moving_average(self, periods):
         """Calculate and returns the simple moving average time series.""" 
         self.periods = periods
-        simple_ma_df = self.data.iloc[:, ['dates', 'close']]
-        close_prices = simple_ma_df.iloc[:, 'close'].values
+        self.simple_ma_df = self.data.loc[:, ['dates', 'close']]
+        close_prices = self.simple_ma_df.loc[:, 'close'].values
         p = self.periods
         n = len(close_prices)
         simple_ma_prices = np.zeros(n)
         for i in range(p-1, n):
-            simple_ma_prices[i] = np.mean(close_prices[(p-i+1):i+1])
+            simple_ma_prices[i] = np.mean(close_prices[(i-p+1):i+1])
         col_name = 'SMA(' + str(p) + ')'
-        simple_ma_df[col_name] = simple_ma_prices
-        return self.simple_ma_df
+        self.simple_ma_df[col_name] = simple_ma_prices
+        return self.simple_ma_df.reset_index(drop=False)
 
 
     
