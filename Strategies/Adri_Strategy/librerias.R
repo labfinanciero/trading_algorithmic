@@ -1,0 +1,8 @@
+library(dplyr)
+library(dygraphs)
+library(xts)      
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(plotly)
+library(tseries)
