@@ -22,5 +22,10 @@ sys.path.append(strategy_folder)
 from Asset import *
 
 amazon = Asset('AMZN', 'Stock', 'Technology', 'US')
-data = apple.market_data()
-sma = apple.simple_moving_average(100)
+data = amazon.market_data()
+sma = amazon.simple_moving_average(30)
+ema = amazon.exp_moving_average(20)
+
+amazon.plot_data(ema)
+
+
