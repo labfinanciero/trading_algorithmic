@@ -26,10 +26,14 @@ from Asset import *
 
 amazon = Asset('AMZN', 'Stock', 'Technology', 'US')
 data = amazon.market_data()
-sma = amazon.simple_moving_average(20)
-ema = amazon.exp_moving_average(8)
-#amazon.plot_data(df_test, '2012-12-10')
+sma = amazon.simple_moving_average(8)
+ema = amazon.exp_moving_average(21)
 
-strategy_result = amazon.strategy_MMA('SMA', [8, 21])[0]
+df_test = pd.concat([amazon.simple_moving_average(8),
+                     amazon.simple_moving_average(21).iloc[:,2]], axis = 1, ignore_index=False)
+amazon.plot_data(df_test, '2012-12-10')
+
+
+results = amazon.strategy_MMA('EMA', [8, 21])
 
 

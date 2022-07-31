@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 #import scipy as scipy
 from datetime import datetime as dt
 import inspect
@@ -32,7 +33,7 @@ class Asset:
     """
     
     # Define the main attributes or descriptions of the asset.
-    def __init__(self, ticker, asset_class, sector, country):
+    def __init__(self, ticker, asset_class=False, sector=False, country=False):
         """Build the constructor to store the information of the asset."""
         self.ticker = ticker
         self.asset_class = asset_class
@@ -59,8 +60,8 @@ class Asset:
         if self.PERIODS is False:
             return print('Please insert a period for the MA')
         
-        self.simple_ma_df = self.data.loc[:, ['dates', 'close']]
-        close_prices = self.simple_ma_df.loc[:, 'close'].values
+        self.simple_ma_df = self.market_data().loc[:, ['dates', 'close']]
+        close_prices = self.market_data().loc[:, 'close'].values
         P = self.PERIODS
         N = len(close_prices)
         simple_ma_prices = np.empty(N)
@@ -72,7 +73,7 @@ class Asset:
     
     
     
-    def exp_moving_average(self, PERIODS):
+    def exp_moving_average(self, PERIODS = False):
         """Calculate the exponential moving average (EMA) time series.
             - Input the parameter PERIODS as integer.
             - Returns a pd.DataFrame with the close price and the EMA.
@@ -81,15 +82,16 @@ class Asset:
         if self.PERIODS is False:
             return print('Please insert a period for the MA')
         
-        self.exp_ma_df = self.data.loc[:, ['dates', 'close']]
-        close_prices = self.exp_ma_df.loc[:, 'close'].values
+        self.exp_ma_df = self.market_data().loc[:, ['dates', 'close']]
+        close_prices = self.market_data().loc[:, 'close'].values
         P = self.PERIODS
         N = len(close_prices)
         K = 2/(P+1)
         exp_ma_prices = np.empty(N)
         exp_ma_prices[0:P-1] = np.nan
         exp_ma_prices[P-1] = np.mean(close_prices[0:P])
-        exp_ma_prices[P:] = [close_prices[i]*K + exp_ma_prices[i-1]*(1-K) for i in range(P, N)]
+        for p in range(P,N):
+            exp_ma_prices[p] = close_prices[p]*K + exp_ma_prices[p-1]*(1-K) 
         col_name = 'EMA(' + str(P) + ')'
         self.exp_ma_df[col_name] = exp_ma_prices
         return self.exp_ma_df   #.reset_index(drop=False)
@@ -120,38 +122,138 @@ class Asset:
         if type(self.periods) is int:
             return print('Please enter at least 2 periods')
         
-        # Strategy:
+        
+        #### Strategy:
         self.periods.sort()
         NB_OF_MA = len(self.periods)
+        
+        
+        #### For the Simple Moving Average --------------------------------------------------------        
         if self.type_of_MA == 'SMA':
-            self.sma_df = self.simple_moving_average(self.periods[0])
+            self.ma_df = self.simple_moving_average(self.periods[0])
             for i in range(1, len(self.periods)):
                 col_name = 'SMA(' + str(self.periods[i]) + ')'
-                self.sma_df.insert(self.sma_df.shape[1], col_name,
+                self.ma_df.insert(self.ma_df.shape[1], col_name,
                                    self.simple_moving_average(self.periods[i]).iloc[:,2].values)
             
+            # When using only 2 MA 
             if NB_OF_MA == 2:
-                crosses = np.zeros(self.sma_df.shape[0])
+                self.crosses = np.zeros(self.ma_df.shape[0])
                 for i in range(self.periods[1], len(self.crosses)-1):
-                    if self.sma_df.iloc[i,2] <= self.sma_df.iloc[i,3] and \
-                        self.sma_df.iloc[i+1,2] >= self.sma_df.iloc[i+1,3]:
-                           crosses[i+1] = 1
-                    elif self.sma_df.iloc[i,2] >= self.sma_df.iloc[i,3] and \
-                        self.sma_df.iloc[i+1,2] < self.sma_df.iloc[i+1,3]:
-                            crosses[i+1] = -1                       
-                self.sma_df.insert(self.sma_df.shape[1], 'signal', crosses)
+                    if self.ma_df.iloc[i,2] <= self.ma_df.iloc[i,3] and \
+                        self.ma_df.iloc[i+1,2] >= self.ma_df.iloc[i+1,3]:
+                           self.crosses[i+1] = 1
+                    elif self.ma_df.iloc[i,2] >= self.ma_df.iloc[i,3] and \
+                        self.ma_df.iloc[i+1,2] < self.ma_df.iloc[i+1,3]:
+                            self.crosses[i+1] = -1                       
+                self.ma_df.insert(self.ma_df.shape[1], 'signal', self.crosses)
+                signal_up = self.ma_df[self.ma_df.loc[:,'signal'] == 1
+                                        ].loc[:,['dates', 'close']].reset_index(drop=True)
+                signal_down = self.ma_df[self.ma_df.loc[:,'signal'] == -1
+                                          ].loc[:,['dates', 'close']].reset_index(drop=True)
+                signal_up.columns = ['dates_buy', 'price_buy']
+                signal_down.columns = ['dates_sell', 'price_sell']
+                
+                # Strategy final data frame
+                self.buy_strategy_df = pd.concat([signal_up, 
+                                             signal_down], axis=1, ignore_index=False)
+                self.buy_strategy_df.drop(self.buy_strategy_df.tail(1).index, inplace=True)
+                self.buy_strategy_df = self.buy_strategy_df.reindex(columns=['dates_buy',
+                                                                             'dates_sell',
+                                                                             'price_buy',
+                                                                             'price_sell'])
+                signal_up = signal_up.drop(0, axis=0).reset_index(drop=True)
+                self.sell_strategy_df = pd.concat([signal_down,signal_up], 
+                                                  axis=1, ignore_index=False)
+                self.sell_strategy_df = self.sell_strategy_df.reindex(columns=['dates_sell',
+                                                                             'dates_buy',
+                                                                             'price_sell',
+                                                                             'price_buy'])
+                # Add a column for the returns of each position
+                self.buy_strategy_df['returns'] = \
+                    (self.buy_strategy_df.loc[:,'price_sell'].values/
+                             self.buy_strategy_df.loc[:,'price_buy'].values) - 1
+                self.sell_strategy_df['returns'] = \
+                    ((self.sell_strategy_df.loc[:,'price_buy'].values/
+                             self.sell_strategy_df.loc[:,'price_sell'].values) - 1)*-1
+            
+            #When using more than 2, Maximum 3 ???       
             elif NB_OF_MA > 2:
                 
                 pass
             
-            self.output = [self.sma_df]
-            return self.output
-        
+            
+        ## For the Exponential Moving Average --------------------------------------------------------
         elif self.type_of_MA == 'EMA':
-            self.exp_moving_average()
-            pass
+            self.ma_df = self.exp_moving_average(self.periods[0])
+            for i in range(1, len(self.periods)):
+                col_name = 'EMA(' + str(self.periods[i]) + ')'
+                self.ma_df.insert(self.ma_df.shape[1], col_name,
+                                   self.exp_moving_average(self.periods[i]).iloc[:,2].values)
+            
+            if NB_OF_MA == 2:
+                self.crosses = np.zeros(self.ma_df.shape[0])
+                for i in range(self.periods[1], len(self.crosses)-1):
+                    if self.ma_df.iloc[i,2] <= self.ma_df.iloc[i,3] and \
+                        self.ma_df.iloc[i+1,2] >= self.ma_df.iloc[i+1,3]:
+                           self.crosses[i+1] = 1
+                    elif self.ma_df.iloc[i,2] >= self.ma_df.iloc[i,3] and \
+                        self.ma_df.iloc[i+1,2] < self.ma_df.iloc[i+1,3]:
+                            self.crosses[i+1] = -1                       
+                self.ma_df.insert(self.ma_df.shape[1], 'signal', self.crosses)
+                signal_up = self.ma_df[self.ma_df.loc[:,'signal'] == 1
+                                        ].loc[:,['dates', 'close']].reset_index(drop=True)
+                signal_down = self.ma_df[self.ma_df.loc[:,'signal'] == -1
+                                          ].loc[:,['dates', 'close']].reset_index(drop=True)
+                signal_up.columns = ['dates_buy', 'price_buy']
+                signal_down.columns = ['dates_sell', 'price_sell']
+                
+                # Strategy final data frame
+                self.buy_strategy_df = pd.concat([signal_up, 
+                                             signal_down], axis=1, ignore_index=False)
+                self.buy_strategy_df.drop(self.buy_strategy_df.tail(1).index, inplace=True)
+                self.buy_strategy_df = self.buy_strategy_df.reindex(columns=['dates_buy',
+                                                                             'dates_sell',
+                                                                             'price_buy',
+                                                                             'price_sell'])
+                signal_up = signal_up.drop(0, axis=0).reset_index(drop=True)
+                self.sell_strategy_df = pd.concat([signal_down,signal_up], 
+                                                  axis=1, ignore_index=False)
+                self.sell_strategy_df = self.sell_strategy_df.reindex(columns=['dates_sell',
+                                                                             'dates_buy',
+                                                                             'price_sell',
+                                                                             'price_buy'])
+                # Add a column for the returns of each position
+                self.buy_strategy_df['returns'] = \
+                    (self.buy_strategy_df.loc[:,'price_sell'].values/
+                             self.buy_strategy_df.loc[:,'price_buy'].values) - 1
+                self.sell_strategy_df['returns'] = \
+                    ((self.sell_strategy_df.loc[:,'price_buy'].values/
+                             self.sell_strategy_df.loc[:,'price_sell'].values) - 1)*-1
+                    
+            elif NB_OF_MA > 2:
+                
+                pass
         
         
+        ## Refine the output dictionary with the information ---------------------------------------
+        # Summary for the Buy
+        self.buy_strat_summary = self.buy_strategy_df.loc[:,'returns'].describe()
+        self.buy_strat_summary['IR'] = self.buy_strat_summary['mean']/self.buy_strat_summary['std']
+        POSITIVE_RETURNS = len(self.buy_strategy_df[self.buy_strategy_df.loc[:,'returns'].values > 0])
+        self.buy_strat_summary['batting_avg'] = POSITIVE_RETURNS/self.buy_strat_summary['count'] 
+        
+        # Summary for the Sell
+        self.sell_strat_summary = self.sell_strategy_df.loc[:,'returns'].describe()
+        self.sell_strat_summary['IR'] = self.sell_strat_summary['mean']/self.sell_strat_summary['std']
+        POSITIVE_RETURNS = len(self.sell_strategy_df[self.sell_strategy_df.loc[:,'returns'].values > 0])
+        self.sell_strat_summary['batting_avg'] = POSITIVE_RETURNS/self.sell_strat_summary['count']
+        
+              
+        self.output = {'buy_summary':self.buy_strat_summary, 'sell_summary':self.sell_strat_summary,
+                       'buy_strategy':self.buy_strategy_df, 'sell_strategy':self.sell_strategy_df,
+                       'general_df':self.ma_df}
+        return self.output
 
     
     
