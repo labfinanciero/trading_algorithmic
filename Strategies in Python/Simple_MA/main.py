@@ -22,18 +22,14 @@ sys.path.append(strategy_folder)
 from Asset import *
 
 
-
 # ------------------------------------- Main ---------------------------------------- #
 
 amazon = Asset('AMZN', 'Stock', 'Technology', 'US')
 data = amazon.market_data()
 sma = amazon.simple_moving_average(20)
-ema2 = amazon.exp_moving_average(8)
+ema = amazon.exp_moving_average(8)
+#amazon.plot_data(df_test, '2012-12-10')
 
-df_test = pd.concat([sma, ema.iloc[:,2]], axis=1)
-
-amazon.plot_data(df_test, '2012-12-10')
-
-ema.iloc[:,[0]].values
+strategy_result = amazon.strategy_MMA('SMA', [8, 21])[0]
 
 

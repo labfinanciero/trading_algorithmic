@@ -90,8 +90,6 @@ class Asset:
         exp_ma_prices[0:P-1] = np.nan
         exp_ma_prices[P-1] = np.mean(close_prices[0:P])
         exp_ma_prices[P:] = [close_prices[i]*K + exp_ma_prices[i-1]*(1-K) for i in range(P, N)]
-        #for i in range(P, N):
-        #    exp_ma_prices[i] = close_prices[i]*K + exp_ma_prices[i-1]*(1-K)
         col_name = 'EMA(' + str(P) + ')'
         self.exp_ma_df[col_name] = exp_ma_prices
         return self.exp_ma_df   #.reset_index(drop=False)
@@ -99,8 +97,8 @@ class Asset:
     
     # Create the strategies
     def strategy_MMA(self, type_of_MA, periods = False, TAKE_PROFIT = False):
-        """2SMA strategy (2 Simple Moving Average).
-            The strategy consists on taking 2 SMA: one short term (i.e: p=8) and one medium
+        """2MA strategy (2 Moving Average: Simple or Exponential).
+            The strategy consists on taking 2 MA: one short term (i.e: p=8) and one medium
             term (i.e: p=21) and evaluate the crossing up or down of the short term MA through
             the medium term MA. For example, when the ST MA crosses up the MT MA the startegy
             buys the asset. Inversely, if it crosses down the startegy sells the asset.
@@ -113,22 +111,48 @@ class Asset:
                 - Batting average
         """
         self.type_of_MA = type_of_MA
-        self.periods = periods.sort()
-        self.NB_OF_MA = len(self.periods)
+        self.periods = periods
         self.TAKE_PROFIT = TAKE_PROFIT
         
+        # Input control:
         if self.periods is False:
             return print('No periods where passed into the function')
+        if type(self.periods) is int:
+            return print('Please enter at least 2 periods')
         
+        # Strategy:
+        self.periods.sort()
+        NB_OF_MA = len(self.periods)
         if self.type_of_MA == 'SMA':
-            df_ = self.simple_moving_average()
-            pass
+            self.sma_df = self.simple_moving_average(self.periods[0])
+            for i in range(1, len(self.periods)):
+                col_name = 'SMA(' + str(self.periods[i]) + ')'
+                self.sma_df.insert(self.sma_df.shape[1], col_name,
+                                   self.simple_moving_average(self.periods[i]).iloc[:,2].values)
+            
+            if NB_OF_MA == 2:
+                crosses = np.zeros(self.sma_df.shape[0])
+                for i in range(self.periods[1], len(self.crosses)-1):
+                    if self.sma_df.iloc[i,2] <= self.sma_df.iloc[i,3] and \
+                        self.sma_df.iloc[i+1,2] >= self.sma_df.iloc[i+1,3]:
+                           crosses[i+1] = 1
+                    elif self.sma_df.iloc[i,2] >= self.sma_df.iloc[i,3] and \
+                        self.sma_df.iloc[i+1,2] < self.sma_df.iloc[i+1,3]:
+                            crosses[i+1] = -1                       
+                self.sma_df.insert(self.sma_df.shape[1], 'signal', crosses)
+            elif NB_OF_MA > 2:
+                
+                pass
+            
+            self.output = [self.sma_df]
+            return self.output
+        
         elif self.type_of_MA == 'EMA':
             self.exp_moving_average()
             pass
         
         
-        pass
+
     
     
     # Plot the data
