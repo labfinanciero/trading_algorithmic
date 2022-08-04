@@ -187,28 +187,31 @@ class Asset:
         # Incorporate the crosses in the ma_df
         self.ma_df.insert(self.ma_df.shape[1], 'signal', crosses)
         # Identify the signals for Buy and Sell
-        signal_up = self.ma_df[self.ma_df.loc[:,'signal'] >= 1
-                               ].loc[:,['dates', 'close']].reset_index(drop=True)
-        signal_down = self.ma_df[self.ma_df.loc[:,'signal'] <= -1
-                                 ].loc[:,['dates', 'close']].reset_index(drop=True)
-        signal_up.columns = ['dates_buy', 'price_buy']
-        signal_down.columns = ['dates_sell', 'price_sell']
+        signal_up = self.ma_df[self.ma_df.loc[:,'signal'] >= 1].loc[:,['dates', 'close', 'signal']].reset_index(drop=True)
+        signal_down = self.ma_df[self.ma_df.loc[:,'signal'] <= -1].loc[:,['dates', 'close', 'signal']].reset_index(drop=True)
+        signal_up.columns = ['dates_buy', 'price_buy', 'signal_buy']
+        signal_down.columns = ['dates_sell', 'price_sell', 'signal_sell']
         
         # Strategy final data frame
-        self.buy_strategy_df = pd.concat([signal_up, 
-                                     signal_down], axis=1, ignore_index=False)
-        self.buy_strategy_df.drop(self.buy_strategy_df.tail(1).index, inplace=True)
-        self.buy_strategy_df = self.buy_strategy_df.reindex(columns=['dates_buy',
-                                                                     'dates_sell',
-                                                                     'price_buy',
-                                                                     'price_sell'])
-        signal_up = signal_up.drop(0, axis=0).reset_index(drop=True)
-        self.sell_strategy_df = pd.concat([signal_down,signal_up], 
-                                          axis=1, ignore_index=False)
-        self.sell_strategy_df = self.sell_strategy_df.reindex(columns=['dates_sell',
-                                                                       'dates_buy',
-                                                                       'price_sell',
-                                                                       'price_buy'])
+        
+        first_day_buy = dt.strptime(signal_up['dates_buy'][0], "%Y-%m-%d")
+        first_day_sell = dt.strptime(signal_down['dates_sell'][0], "%Y-%m-%d")
+
+        if first_day_buy > first_day_sell:
+            signal_down_temp = signal_down.shift(-1).reset_index(drop=True)
+            signal_down_temp.drop(index=signal_down.shape[0]-1, inplace=True)
+            signal_up_temp = signal_up.copy(deep=True)
+            signal_up_temp.drop(index=signal_up.shape[0]-1, inplace=True)
+
+            self.buy_strategy_df = pd.concat([signal_up_temp, signal_down_temp], axis=1, ignore_index=False)
+            self.buy_strategy_df = self.buy_strategy_df[['dates_buy', 'dates_sell', 'price_buy', 'price_sell']]
+        else:
+            self.buy_strategy_df = pd.concat([signal_up, signal_down], axis=1, ignore_index=False)
+            self.buy_strategy_df = self.buy_strategy_df[['dates_buy', 'dates_sell', 'price_buy', 'price_sell']]
+            
+
+        self.sell_strategy_df = pd.concat([signal_down,signal_up], axis=1, ignore_index=False)
+        self.sell_strategy_df = self.sell_strategy_df[['dates_sell', 'dates_buy', 'price_sell', 'price_buy']]
         
         # Add a column for the returns of each position Buy and Sell
         self.buy_strategy_df['returns'] = \
