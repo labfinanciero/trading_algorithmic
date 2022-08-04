@@ -214,16 +214,11 @@ class Asset:
         self.sell_strategy_df = self.sell_strategy_df[['dates_sell', 'dates_buy', 'price_sell', 'price_buy']]
         
         # Add a column for the returns of each position Buy and Sell
-        self.buy_strategy_df['returns'] = \
-            (self.buy_strategy_df.loc[:,'price_sell'].values/
-             self.buy_strategy_df.loc[:,'price_buy'].values) - 1
-        self.sell_strategy_df['returns'] = \
-            ((self.sell_strategy_df.loc[:,'price_buy'].values/
+        self.buy_strategy_df['returns'] = (self.buy_strategy_df.loc[:,'price_sell'].values/
+            self.buy_strategy_df.loc[:,'price_buy'].values) - 1
+        self.sell_strategy_df['returns'] = ((self.sell_strategy_df.loc[:,'price_buy'].values/
               self.sell_strategy_df.loc[:,'price_sell'].values) - 1)*-1
-                
-            
-        
-        
+   
         ## Refine the output dictionary with the information ---------------------------------------
         # Summary for the Buy
         self.buy_strat_summary = self.buy_strategy_df.loc[:,'returns'].describe()

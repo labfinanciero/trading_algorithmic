@@ -60,7 +60,7 @@ mean_returns_sell =  np.zeros(len(assets_names))
 
 for a in enumerate(assets_names):
     asset = Asset(a[1])
-    results_asset = asset.strategy_MMA('SMA', [8, 21, 200])
+    results_asset = asset.strategy_MMA('EMA', [8, 21, 200])
     batt_avg_buy[a[0]] = results_asset['buy_summary']['batting_avg']
     batt_avg_sell[a[0]] = results_asset['sell_summary']['batting_avg']
     mean_returns_buy[a[0]] = results_asset['buy_summary']['mean']
