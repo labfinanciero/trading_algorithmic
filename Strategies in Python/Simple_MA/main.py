@@ -12,15 +12,15 @@ import os
 import pathlib
 import sys
 
-parent_folder = str(pathlib.PurePath(os.getcwd()).parent)
-strategy_folder = parent_folder + "r\Strategies in Python\Simple_MA"
+parent_folder = str(pathlib.PurePath(os.getcwd()))
+strategy_folder = parent_folder + "\\Simple_MA"
 sys.path.append(strategy_folder)
 # ----------------------------------------------------------------------------------- #
 
 # Import needed packages
 
-from Asset import Asset
-import pandas as pd
+from Asset import *
+
 
 # ------------------------------------- Main ---------------------------------------- #
 
@@ -41,10 +41,41 @@ asset.plot_data(df_test)
 
 # Get the results for each asset on both Buy and Sell
 results_2MA = asset.strategy_MMA('EMA', [8, 21])
+
+
 results_3MA = asset.strategy_MMA('EMA', [8, 21, 200])
 #-----------------------------------------------------------------------------------------
 
 
 # Test all assets ----------------------------------------------------------------------:
-data_folder = parent_folder + r'\Strategies in Python\data\assets'
-assets_names = [x.replace(".csv","")  for x in os.listdir(data_folder)] 
+data_folder = parent_folder + '\\data\\assets'
+assets_names = [x.replace(".csv","")  for x in os.listdir(data_folder)]
+
+info_list = ['buy_summary', 'sell_summary', 'buy_strategy', 'sell_strategy', 'general_df']
+batt_avg_buy =  np.zeros(len(assets_names))
+batt_avg_sell =  np.zeros(len(assets_names))
+mean_returns_buy =  np.zeros(len(assets_names))
+mean_returns_sell =  np.zeros(len(assets_names))
+
+for a in enumerate(assets_names["assets"]):
+    asset = Asset(a[1])
+    results_asset = asset.strategy_MMA('SMA', [8, 21, 200])
+    batt_avg_buy[a[0]] = results_asset['buy_summary']['mean']
+    batt_avg_sell[a[0]] = results_asset['sell_summary']['mean']
+    mean_returns_buy[a[0]] = results_asset['buy_summary']['batting_avg']
+    mean_returns_sell[a[0]] = results_asset['sell_summary']['batting_avg']
+    
+# Plot the 4 df
+df1 = pd.DataFrame({'assets':assets_names, 'batt_avg_buy':batt_avg_buy})
+df2 = pd.DataFrame({'assets':assets_names, 'batt_avg_sell':batt_avg_sell})
+df3 = pd.DataFrame({'assets':assets_names, 'mean_ret_buy':mean_returns_buy})
+df4 = pd.DataFrame({'assets':assets_names, 'mean_ret_sell':mean_returns_sell})
+
+
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+ax1.scatter(df1['assets'], df1['batt_avg_buy'], color='blue')
+ax2.scatter(df2['assets'], df2['batt_avg_sell'], color='green')
+ax3.hist(df3['mean_ret_buy'], color='blue')
+ax4.hist(df4['mean_ret_sell'], color='green')
+
+plt.show

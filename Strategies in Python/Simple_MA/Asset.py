@@ -15,8 +15,8 @@ import os
 import pathlib
 import sys
 
-parent_folder = str(pathlib.PurePath(os.getcwd()).parent)
-data_folder = parent_folder + "\\Strategies in Python\\data\\assets"
+parent_folder = str(pathlib.PurePath(os.getcwd()))
+data_folder = parent_folder + "\\data\\assets"
 
 
 class Asset:  
