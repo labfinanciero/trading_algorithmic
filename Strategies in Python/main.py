@@ -32,7 +32,7 @@ asset = Asset('IR', 'Stock', 'Technology', 'US')
 data = asset.market_data()
 # Calculate the Moving averages: Simple SMA(p) and Exponential EMA(p)
 sma = asset.simple_moving_average(8)
-ema = asset.exp_moving_average(21)
+ema = asset.exp_moving_average(200)
 
 # Plot the price and the moving averages
 df_test = pd.concat([asset.simple_moving_average(8),
