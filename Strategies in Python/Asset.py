@@ -91,13 +91,19 @@ class Asset:
         P = self.PERIODS
         N = len(close_prices)
         K = 2/(P+1)
-        exp_ma_prices = np.empty(N)
-        exp_ma_prices[0:P-1] = np.nan
-        exp_ma_prices[P-1] = np.mean(close_prices[0:P])
-        for p in range(P,N):
-            exp_ma_prices[p] = close_prices[p]*K + exp_ma_prices[p-1]*(1-K) 
         col_name = 'EMA(' + str(P) + ')'
-        self.exp_ma_df[col_name] = exp_ma_prices
+        # Manage when the asset does not have enough data to calculate
+        if P > len(close_prices):
+            self.exp_ma_df[col_name] = np.ones(N)*np.nan 
+            print("The asset does not have enough data to calculate the EMA(" + str(P) + ")")
+        else:
+            exp_ma_prices = np.empty(N)
+            exp_ma_prices[0:P-1] = np.nan
+            exp_ma_prices[P-1] = np.mean(close_prices[0:P])
+            for p in range(P,N):
+                exp_ma_prices[p] = close_prices[p]*K + exp_ma_prices[p-1]*(1-K) 
+            self.exp_ma_df[col_name] = exp_ma_prices
+
         return self.exp_ma_df   #.reset_index(drop=False)
         
     
