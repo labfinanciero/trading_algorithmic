@@ -95,7 +95,7 @@ class Asset:
         # Manage when the asset does not have enough data to calculate
         if P > len(close_prices):
             self.exp_ma_df[col_name] = np.ones(N)*np.nan 
-            print("The asset does not have enough data to calculate the EMA(" + str(P) + ")")
+            print("The asset " + self.ticker + " does not have enough data to calculate the EMA(" + str(P) + ")")
         else:
             exp_ma_prices = np.empty(N)
             exp_ma_prices[0:P-1] = np.nan
